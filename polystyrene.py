@@ -1,12 +1,12 @@
 import win32com.client
 import logging
 import math
+import pandas
 
 acad = win32com.client.Dispatch("AutoCAD.Application")
 shell = win32com.client.Dispatch("WScript.Shell")  # windows scripts
 doc = acad.ActiveDocument
 logger = logging.getLogger(__name__)
-
 
 def create_boundary():
     doc.Utility.Prompt(
@@ -55,6 +55,8 @@ def get_and_create_position_discription(item, scale):
         item.Area * (scale ** 2) / 1000000) * (thikness / 1000)
     return returned_dict
 
+def format_data_to_excel(dict):
+
 
 def main():
     shell.AppActivate(acad.Caption)  # change focus to autocad
@@ -81,7 +83,9 @@ def main():
                 item, scale)
         is_continued = doc.Utility.GetInteger(
             "Для того чтобы продолжить введите '1', для завершения введите '0'\n(для ввода доступны только вышеуказанные числа, иначе будет ошибка)\n")
+    # df = pandas.DataFrame({
 
+    # })
     print(object_collection)
 
 
