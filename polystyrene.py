@@ -1,5 +1,6 @@
 import win32com.client
 import logging
+import math
 
 acad = win32com.client.Dispatch("AutoCAD.Application")
 shell = win32com.client.Dispatch("WScript.Shell")  # windows scripts
@@ -27,6 +28,12 @@ def get_selection(doc, text="Выберете объект"):
     return selection
 
 
+def get_width_and_height_of_rectangle(item):
+    width = item.Coordinates[0] - item.Coordinates[2]
+    height = item.Coordinates[1] - item.Coordinates[5]
+    return [width, height]
+
+
 def get_and_create_position_discription(item, scale):
     poly_type = {
         1: "ППТ-15-А-Р",
@@ -35,9 +42,11 @@ def get_and_create_position_discription(item, scale):
     returned_dict = {
         "count": 1
     }
+    width_height_list = get_width_and_height_of_rectangle(item)
     thikness = doc.Utility.GetInteger(
         "Введите толщину пакета утеплителя и нажмите Enter\n")
-    returned_dict["thikness"] = thikness
+    returned_dict["dimensions"] = str(
+        math.trunc(width_height_list[0] * scale)) + "x" + str(math.trunc(width_height_list[0] * scale)) + "x" + str(thikness)
     received_type = doc.Utility.GetInteger(
         "Выберите вид утеплителя и нажмите Enter\n(если ППТ-15-А-Р - введите 1, если Эффективный утеплитель - введите 2)\n")
     returned_dict["type"] = poly_type[received_type]
