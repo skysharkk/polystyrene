@@ -2,11 +2,13 @@ import win32com.client
 import logging
 import math
 import pandas
+import numpy as np
 
 acad = win32com.client.Dispatch("AutoCAD.Application")
 shell = win32com.client.Dispatch("WScript.Shell")  # windows scripts
 doc = acad.ActiveDocument
 logger = logging.getLogger(__name__)
+
 
 def create_boundary():
     doc.Utility.Prompt(
@@ -55,38 +57,41 @@ def get_and_create_position_discription(item, scale):
         item.Area * (scale ** 2) / 1000000) * (thikness / 1000)
     return returned_dict
 
-def format_data_to_excel(dict):
+# def format_data_to_excel(dict):
 
+
+# def main():
+#     shell.AppActivate(acad.Caption)  # change focus to autocad
+#     scale = doc.Utility.GetInteger(
+#         "Введите масштаб\n(Пример: если масштаб 1:40, то введите 40)\n")
+#     object_collection = {}
+#     is_continued = 1
+#     while is_continued == 1:
+#         create_boundary()
+#         selection = get_selection(
+#             doc, text="Выберите образованный контур (не более одного!)")
+#         if selection.Count > 1 and selection.Item(0).ObjectName.lower() != "acdbpolyline":
+#             doc.Utility.Prompt(
+#                 "Ошибка: выбрано недопустимое количество объектов или невеный тип объекта\n")
+#             continue
+#         item = selection.Item(0)
+#         item.Color = 1
+#         position = doc.Utility.GetInteger(
+#             "Введите позицию пакета утеплителя и нажмите Enter\n")
+#         if position in object_collection:
+#             object_collection[position]["count"] += 1
+#         else:
+#             object_collection[position] = get_and_create_position_discription(
+#                 item, scale)
+#         is_continued = doc.Utility.GetInteger(
+#             "Для того чтобы продолжить введите '1', для завершения введите '0'\n(для ввода доступны только вышеуказанные числа, иначе будет ошибка)\n")
+#     print(object_collection)
 
 def main():
-    shell.AppActivate(acad.Caption)  # change focus to autocad
-    scale = doc.Utility.GetInteger(
-        "Введите масштаб\n(Пример: если масштаб 1:40, то введите 40)\n")
-    object_collection = {}
-    is_continued = 1
-    while is_continued == 1:
-        create_boundary()
-        selection = get_selection(
-            doc, text="Выберите образованный контур (не более одного!)")
-        if selection.Count > 1 and selection.Item(0).ObjectName.lower() != "acdbpolyline":
-            doc.Utility.Prompt(
-                "Ошибка: выбрано недопустимое количество объектов или невеный тип объекта\n")
-            continue
-        item = selection.Item(0)
-        item.Color = 1
-        position = doc.Utility.GetInteger(
-            "Введите позицию пакета утеплителя и нажмите Enter\n")
-        if position in object_collection:
-            object_collection[position]["count"] += 1
-        else:
-            object_collection[position] = get_and_create_position_discription(
-                item, scale)
-        is_continued = doc.Utility.GetInteger(
-            "Для того чтобы продолжить введите '1', для завершения введите '0'\n(для ввода доступны только вышеуказанные числа, иначе будет ошибка)\n")
-    # df = pandas.DataFrame({
-
-    # })
-    print(object_collection)
+    df = pandas.DataFrame(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), columns=[
+                          "Поз.", "Обозначение", "Наименование", "Объем ед. м3", "Примечание"])
+    df.to_excel('./ppt_excel_template.xlsx',
+                sheet_name='Расскладка', index=False)
 
 
 main()
