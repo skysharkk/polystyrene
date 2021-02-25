@@ -30,6 +30,7 @@ def get_selection(doc, text="Выберете объект"):
 
 
 def get_width_and_height_of_rectangle(item):
+    print(item)
     width = item.Coordinates[0] - item.Coordinates[2]
     height = item.Coordinates[1] - item.Coordinates[5]
     return [width, height]
@@ -76,17 +77,18 @@ def main():
                 "Ошибка: выбрано недопустимое количество объектов или неверный тип объекта\n")
             continue
         item = selection.Item(0)
-        print(item)
+
         position = doc.Utility.GetInteger(
             "Введите позицию пакета утеплителя и нажмите Enter\n")
-        for item in object_collection:
-            if item[0] == position:
-                item[AMOUNT_LIST_POSITION] += 1
+        for element in object_collection:
+            if element[0] == position:
+                element[AMOUNT_LIST_POSITION] += 1
                 is_exist = True
                 break
 
         if is_exist == False:
-            object_collection.append(get_and_create_position_discription(doc, item, scale, position))
+            object_collection.append(
+                get_and_create_position_discription(doc, item, scale, position))
         else:
             is_exist = False
 
