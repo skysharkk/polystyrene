@@ -29,10 +29,21 @@ def get_selection(doc, text="Выберете объект"):
     return selection
 
 
-def get_width_and_height_of_rectangle(item):
-    print(item)
-    width = item.Coordinates[0] - item.Coordinates[2]
-    height = item.Coordinates[1] - item.Coordinates[5]
+def get_width_and_heights(tu, scale):
+    x_coordinates_list = []
+    y_coordinates_list = []
+    for index in range(len(tu)):
+        if index % 2 == 0:
+            x_coordinates_list.append(abs(tu[index]))
+        else:
+            y_coordinates_list.append(abs(tu[index]))
+    max_x = max(x_coordinates_list)
+    min_x = min(x_coordinates_list)
+    max_y = max(y_coordinates_list)
+    min_y = min(y_coordinates_list)
+
+    width = math.trunc((max_x - min_x) * scale)
+    height = math.trunc((max_y - min_y) * scale)
     return [width, height]
 
 
@@ -48,13 +59,13 @@ def get_and_create_position_discription(doc, item, scale, number):
         }
     }
     START_AMOUNT = 1
-    width_height_list = get_width_and_height_of_rectangle(item)
+    width_height_list = get_width_and_heights(item, scale)
     thikness = doc.Utility.GetInteger(
         "Введите толщину пакета утеплителя и нажмите Enter\n")
     received_type = doc.Utility.GetInteger(
         "Выберите вид утеплителя и нажмите Enter\n(если ППТ-15-А-Р - введите 1, если Эффективный утеплитель - введите 2)\n")
     dimensions = poly_type[received_type]["type"] + str(
-        math.trunc(width_height_list[0] * scale)) + "x" + str(math.trunc(width_height_list[1] * scale)) + "x" + str(thikness)
+        width_height_list[0]) + "x" + str(width_height_list[1]) + "x" + str(thikness)
     volume = (
         item.Area * (scale ** 2) / 1000000) * (thikness / 1000)
     return [number, poly_type[received_type]["norm"], dimensions, START_AMOUNT, volume, ""]
