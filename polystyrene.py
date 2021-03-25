@@ -166,36 +166,4 @@ def main():
     write_to_excel(format_data(items_data))
 
 
-# def main():
-#     doc = acad.ActiveDocument
-#     shell.AppActivate(acad.Caption)  # change focus to autocad
-#     scale = doc.Utility.GetInteger(
-#         "Введите масштаб\n(Пример: если масштаб 1:40, то введите 40)\n")
-#     object_collection = []
-#     is_continued = 1
-#     is_exist = False
-#     AMOUNT_LIST_POSITION = 3
-#     while is_continued == 1:
-#         selection = get_selected(
-#             doc, text="Выберите образованный контур (не более одного!)")
-#         if selection.Count > 1 and selection.Item(0).ObjectName.lower() != "acdbpolyline":
-#             doc.Utility.Prompt(
-#                 "Ошибка: выбрано недопустимое количество объектов или неверный тип объекта\n")
-#             continue
-#         item = selection.Item(0)
-#         position = doc.Utility.GetInteger(
-#             "Введите позицию пакета утеплителя и нажмите Enter\n")
-#         for element in object_collection:
-#             if element[0] == position:
-#                 element[AMOUNT_LIST_POSITION] += 1
-#                 is_exist = True
-#                 break
-#         if is_exist == False:
-#             object_collection.append(
-#                 get_and_create_position_discription(doc, item, scale, position))
-#         else:
-#             is_exist = False
-#         is_continued = doc.Utility.GetInteger(
-#             "Для того чтобы продолжить введите '1', для завершения введите '0'\n(для ввода доступны только вышеуказанные числа, иначе будет ошибка)\n")
-#     write_to_excel(object_collection)
 main()
