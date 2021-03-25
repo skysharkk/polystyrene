@@ -3,8 +3,10 @@ import logging
 import math
 import pandas
 import numpy as np
+import array
+from pyautocad import Autocad
 
-acad = win32com.client.Dispatch("AutoCAD.Application")
+acad = Autocad(create_if_not_exists=True)
 shell = win32com.client.Dispatch("WScript.Shell")  # windows scripts
 logger = logging.getLogger(__name__)
 
@@ -15,6 +17,11 @@ def write_to_excel(collection):
 
     df.to_excel('./ppt_excel_template.xlsx',
                 sheet_name='Расскладка', index=False)
+
+
+def round_half_up(n, decimals=0):
+    multiplier = 10 ** decimals
+    return int(math.floor(n*multiplier + 0.5) / multiplier)
 
 
 def get_selected(doc, text="Выберете объект"):
@@ -37,7 +44,7 @@ def get_initial_data(doc):
         },
         2: {
             "type": "",
-            "norm": "Эффективный утеплитель"
+            "norm": "Эффективный утеплитель λ ≤ 0,034 Вт/(м·°C),"
         }
     }
     thikness = doc.Utility.GetInteger(
@@ -61,9 +68,9 @@ def get_coordinates_of_item(coordinates_tuple):
     y_coordinates_list = []
     for index in range(len(coordinates_tuple)):
         if index % 2 == 0:
-            x_coordinates_list.append(abs(coordinates_tuple[index]))
+            x_coordinates_list.append(coordinates_tuple[index])
         else:
-            y_coordinates_list.append(abs(coordinates_tuple[index]))
+            y_coordinates_list.append(coordinates_tuple[index])
     max_x = max(x_coordinates_list)
     min_x = min(x_coordinates_list)
     max_y = max(y_coordinates_list)
@@ -78,8 +85,10 @@ def get_coordinates_of_item(coordinates_tuple):
 
 def get_width_and_heights(coordinates_tuple, scale):
     coordinates = get_coordinates_of_item(coordinates_tuple)
-    width = math.trunc((coordinates["max_x"] - coordinates["min_x"]) * scale)
-    height = math.trunc((coordinates["max_y"] - coordinates["min_y"]) * scale)
+    width = round_half_up(
+        (abs(coordinates["max_x"]) - abs(coordinates["min_x"])) * scale)
+    height = round_half_up(
+        (abs(coordinates["max_y"]) - abs(coordinates["min_y"])) * scale)
     return [width, height]
 
 
@@ -88,7 +97,7 @@ def add_name_item_to_model(doc, coordinates_tuple, name):
     coordinates = get_coordinates_of_item(coordinates_tuple)
     x = (coordinates["min_x"] + coordinates["max_x"]) / 2
     y = (coordinates["min_y"] + coordinates["max_y"]) / 2
-    insertion_point = (x, y)
+    insertion_point = array.array('d', [x, y, 0.0])
     doc.ModelSpace.AddText(name, insertion_point, TEXT_HEIGHT)
 
 
@@ -119,31 +128,42 @@ def check_size_match(items_data, item_sizes_list):
     return 0
 
 
+def format_data(collection):
+    result = []
+    for name in collection:
+        result.append(collection[name]["discription"])
+    return result
+
+
 def main():
     AMOUNT_INDEX = 3
+    is_continued = 1
     items_data = {}
-    doc = acad.ActiveDocument
-    shell.AppActivate(acad.Caption)
+    doc = acad.doc
+    shell.AppActivate(acad.app.Caption)
     scale = doc.Utility.GetInteger(
         "Введите масштаб\n(Пример: если масштаб 1:40, то введите 40)\n")
-    initial_data = get_initial_data(doc)
-    items = initial_data["selected"]
-    for index in range(items.Count):
-        item = items.Item(index)
-        coordinates = item.Coordinates
-        item_sizes_list = get_width_and_heights(coordinates, scale)
-        is_exist = check_size_match(items_data, item_sizes_list)
-        if is_exist > 0:
-            items_data[is_exist]["discription"][AMOUNT_INDEX] += 1
-            add_name_item_to_model(doc, coordinates, str(is_exist))
-        else:
-            pos = len(items_data) + 1
-            item_dict = create_item_dict(
-                item, scale, initial_data["thikness"], initial_data["type"], initial_data["norm"], pos)
-            items_data[pos] = item_dict
-            add_name_item_to_model(doc, coordinates, str(pos))
+    while is_continued == 1:
+        initial_data = get_initial_data(doc)
+        items = initial_data["selected"]
+        for index in range(items.Count):
+            item = items.Item(index)
+            coordinates = item.Coordinates
+            item_sizes_list = get_width_and_heights(coordinates, scale)
+            is_exist = check_size_match(items_data, item_sizes_list)
+            if is_exist > 0:
+                items_data[is_exist]["discription"][AMOUNT_INDEX] += 1
+                add_name_item_to_model(doc, coordinates, str(is_exist))
+            else:
+                pos = len(items_data) + 1
+                item_dict = create_item_dict(
+                    item, scale, initial_data["thikness"], initial_data["type"], initial_data["norm"], pos)
+                items_data[pos] = item_dict
+                add_name_item_to_model(doc, coordinates, str(pos))
+        is_continued = doc.Utility.GetInteger(
+            "Для того чтобы продолжить введите '1', для завершения введите '0'\n(для ввода доступны только вышеуказанные числа, иначе будет ошибка)\n")
 
-    print(items_data)
+    write_to_excel(format_data(items_data))
 
 
 # def main():
