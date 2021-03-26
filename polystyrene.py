@@ -14,14 +14,17 @@ logger = logging.getLogger(__name__)
 def write_to_excel(collection):
     df = pandas.DataFrame(np.array(collection), columns=[
         "Поз.", "Обозначение", "Наименование", "Кол.", "Объем ед. м3", "Примечание"])
-
     df.to_excel('./ppt_excel_template.xlsx',
                 sheet_name='Расскладка', index=False)
 
 
-def round_half_up(n, decimals=0):
+def round_half_up(n, decimals=0, int_result=True):
     multiplier = 10 ** decimals
-    return int(math.floor(n*multiplier + 0.5) / multiplier)
+    result = math.floor(n*multiplier + 0.5) / multiplier
+    if int_result:
+        return int(result)
+    else:
+        return result
 
 
 def get_selected(doc, text="Выберете объект"):
@@ -85,18 +88,18 @@ def get_coordinates_of_item(coordinates_tuple):
 
 def get_width_and_heights(coordinates_tuple, scale):
     coordinates = get_coordinates_of_item(coordinates_tuple)
-    width = round_half_up(
-        (abs(coordinates["max_x"]) - abs(coordinates["min_x"])) * scale)
-    height = round_half_up(
-        (abs(coordinates["max_y"]) - abs(coordinates["min_y"])) * scale)
+    width = abs(round_half_up(
+        (coordinates["max_x"] - coordinates["min_x"]) * scale))
+    height = abs(round_half_up(
+        (coordinates["max_y"] - coordinates["min_y"]) * scale))
     return [width, height]
 
 
 def add_name_item_to_model(doc, coordinates_tuple, name):
     TEXT_HEIGHT = 3
     coordinates = get_coordinates_of_item(coordinates_tuple)
-    x = (coordinates["min_x"] + coordinates["max_x"]) / 2
-    y = (coordinates["min_y"] + coordinates["max_y"]) / 2
+    x = ((coordinates["min_x"] + coordinates["max_x"]) / 2) - 1.5
+    y = ((coordinates["min_y"] + coordinates["max_y"]) / 2) - 1.5
     insertion_point = array.array('d', [x, y, 0.0])
     doc.ModelSpace.AddText(name, insertion_point, TEXT_HEIGHT)
 
@@ -111,8 +114,8 @@ def create_item_dict(item, scale, thikness, type, norm, number):
     width_height_list = get_width_and_heights(coordinates_tuple, scale)
     dimensions = type + str(
         width_height_list[0]) + "x" + str(width_height_list[1]) + "x" + str(thikness)
-    volume = (
-        item.Area * (scale ** 2) / 1000000) * (thikness / 1000)
+    volume = round_half_up((
+        item.Area * (scale ** 2) / 1000000) * (thikness / 1000), 2, False)
     return {
         "discription": [number, norm, dimensions, START_AMOUNT, volume, ""],
         "sizes": width_height_list,
