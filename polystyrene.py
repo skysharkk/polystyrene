@@ -4,6 +4,9 @@ import math
 import pandas
 import numpy as np
 import array
+import ctypes
+import json
+
 from pyautocad import Autocad
 
 acad = Autocad(create_if_not_exists=True)
@@ -11,11 +14,22 @@ shell = win32com.client.Dispatch("WScript.Shell")  # windows scripts
 logger = logging.getLogger(__name__)
 
 
+def show_error_window(error_message, window_name=u"Ошибка"):
+    ctypes.windll.user32.MessageBoxW(
+        0, error_message, window_name, 0)
+
+
 def write_to_excel(collection):
     df = pandas.DataFrame(np.array(collection), columns=[
         "Поз.", "Обозначение", "Наименование", "Кол.", "Объем ед. м3", "Примечание"])
-    df.to_excel('./ppt_excel_template.xlsx',
-                sheet_name='Расскладка', index=False)
+    try:
+        df.to_excel('./ppt_excel_template.xlsx',
+                    sheet_name='Расскладка', index=False)
+    except Exception:
+        show_error_window(
+            u"Ошибка при записи данных в Excel, возможно вы забыли закрыть рабочий файл.")
+        logger.debug(
+            "Ошибка при записи данных в Excel, возможно вы забыли закрыть рабочий файл.")
 
 
 def round_half_up(n, decimals=0, int_result=True):
@@ -95,13 +109,12 @@ def get_width_and_heights(coordinates_tuple, scale):
     return [width, height]
 
 
-def add_name_item_to_model(doc, coordinates_tuple, name):
-    TEXT_HEIGHT = 3
+def add_name_item_to_model(doc, coordinates_tuple, name, text_height=3):
     coordinates = get_coordinates_of_item(coordinates_tuple)
-    x = ((coordinates["min_x"] + coordinates["max_x"]) / 2) - 1.5
-    y = ((coordinates["min_y"] + coordinates["max_y"]) / 2) - 1.5
+    x = ((coordinates["min_x"] + coordinates["max_x"]) / 2) - (text_height / 2)
+    y = ((coordinates["min_y"] + coordinates["max_y"]) / 2) - (text_height / 2)
     insertion_point = array.array('d', [x, y, 0.0])
-    doc.ModelSpace.AddText(name, insertion_point, TEXT_HEIGHT)
+    doc.ModelSpace.AddText(name, insertion_point, text_height)
 
 
 def compare_sizes(first_size_list, second_size_list):
@@ -118,7 +131,7 @@ def create_item_dict(item, scale, thikness, type, norm, number):
         item.Area * (scale ** 2) / 1000000) * (thikness / 1000), 2, False)
     return {
         "discription": [number, norm, dimensions, START_AMOUNT, volume, ""],
-        "sizes": width_height_list,
+        "sizes": width_height_list + [thikness],
     }
 
 
@@ -152,7 +165,8 @@ def main():
         for index in range(items.Count):
             item = items.Item(index)
             coordinates = item.Coordinates
-            item_sizes_list = get_width_and_heights(coordinates, scale)
+            item_sizes_list = get_width_and_heights(
+                coordinates, scale) + [initial_data["thikness"]]
             is_exist = check_size_match(items_data, item_sizes_list)
             if is_exist > 0:
                 items_data[is_exist]["discription"][AMOUNT_INDEX] += 1
@@ -165,7 +179,8 @@ def main():
                 add_name_item_to_model(doc, coordinates, str(pos))
         is_continued = doc.Utility.GetInteger(
             "Для того чтобы продолжить введите '1', для завершения введите '0'\n(для ввода доступны только вышеуказанные числа, иначе будет ошибка)\n")
-
+    with open("data.json", "w", encoding="utf8") as write_file:
+        json.dump(items_data, write_file, ensure_ascii=False)
     write_to_excel(format_data(items_data))
 
 
