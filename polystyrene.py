@@ -1,35 +1,12 @@
-import win32com.client
-import logging
-import math
-import pandas
-import numpy as np
-import array
-import ctypes
-import json
-
 from pyautocad import Autocad
+import win32com.client
+import math
+import json
+from p_utility.p_modules import get_selected, write_to_excel, get_coordinates_of_item, add_name_item_to_model
+
 
 acad = Autocad(create_if_not_exists=True)
 shell = win32com.client.Dispatch("WScript.Shell")  # windows scripts
-logger = logging.getLogger(__name__)
-
-
-def show_error_window(error_message, window_name=u"Ошибка"):
-    ctypes.windll.user32.MessageBoxW(
-        0, error_message, window_name, 0)
-
-
-def write_to_excel(collection):
-    df = pandas.DataFrame(np.array(collection), columns=[
-        "Поз.", "Обозначение", "Наименование", "Кол.", "Объем ед. м3", "Примечание"])
-    try:
-        df.to_excel('./ppt_excel_template.xlsx',
-                    sheet_name='Расскладка', index=False)
-    except Exception:
-        show_error_window(
-            u"Ошибка при записи данных в Excel, возможно вы забыли закрыть рабочий файл.")
-        logger.debug(
-            "Ошибка при записи данных в Excel, возможно вы забыли закрыть рабочий файл.")
 
 
 def round_half_up(n, decimals=0, int_result=True):
@@ -39,18 +16,6 @@ def round_half_up(n, decimals=0, int_result=True):
         return int(result)
     else:
         return result
-
-
-def get_selected(doc, text="Выберете объект"):
-    doc.Utility.prompt(text)
-    try:
-        doc.SelectionSets.Item("SS1").Delete()
-    except Exception:
-        logger.debug('Delete selection failed')
-
-    selected = doc.SelectionSets.Add("SS1")
-    selected.SelectOnScreen()
-    return selected
 
 
 def get_initial_data(doc):
@@ -80,26 +45,6 @@ def get_initial_data(doc):
     }
 
 
-def get_coordinates_of_item(coordinates_tuple):
-    x_coordinates_list = []
-    y_coordinates_list = []
-    for index in range(len(coordinates_tuple)):
-        if index % 2 == 0:
-            x_coordinates_list.append(coordinates_tuple[index])
-        else:
-            y_coordinates_list.append(coordinates_tuple[index])
-    max_x = max(x_coordinates_list)
-    min_x = min(x_coordinates_list)
-    max_y = max(y_coordinates_list)
-    min_y = min(y_coordinates_list)
-    return {
-        "min_x": min_x,
-        "max_x": max_x,
-        "min_y": min_y,
-        "max_y": max_y,
-    }
-
-
 def get_width_and_heights(coordinates_tuple, scale):
     coordinates = get_coordinates_of_item(coordinates_tuple)
     width = abs(round_half_up(
@@ -107,14 +52,6 @@ def get_width_and_heights(coordinates_tuple, scale):
     height = abs(round_half_up(
         (coordinates["max_y"] - coordinates["min_y"]) * scale))
     return [width, height]
-
-
-def add_name_item_to_model(doc, coordinates_tuple, name, text_height=3):
-    coordinates = get_coordinates_of_item(coordinates_tuple)
-    x = ((coordinates["min_x"] + coordinates["max_x"]) / 2) - (text_height / 2)
-    y = ((coordinates["min_y"] + coordinates["max_y"]) / 2) - (text_height / 2)
-    insertion_point = array.array('d', [x, y, 0.0])
-    doc.ModelSpace.AddText(name, insertion_point, text_height)
 
 
 def compare_sizes(first_size_list, second_size_list):
@@ -165,6 +102,7 @@ def main():
         for index in range(items.Count):
             item = items.Item(index)
             coordinates = item.Coordinates
+            print(coordinates)
             item_sizes_list = get_width_and_heights(
                 coordinates, scale) + [initial_data["thikness"]]
             is_exist = check_size_match(items_data, item_sizes_list)
