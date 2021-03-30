@@ -49,12 +49,6 @@ def get_coordinates_of_item(coordinates_tuple):
     min_x = min(x_coordinates_list)
     max_y = max(y_coordinates_list)
     min_y = min(y_coordinates_list)
-    print({
-        "min_x": min_x,
-        "max_x": max_x,
-        "min_y": min_y,
-        "max_y": max_y,
-    })
     return {
         "min_x": min_x,
         "max_x": max_x,

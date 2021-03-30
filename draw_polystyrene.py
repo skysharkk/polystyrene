@@ -1,7 +1,6 @@
 from array import array
 import json
 from copy import copy
-from numpy import result_type
 from pyautocad import Autocad
 from p_utility.p_modules import add_name_item_to_model
 
@@ -79,7 +78,7 @@ def format_coordinates_from_name(coordinates):
     return result
 
 
-def draw_all_PPT(data):
+def main(data):
     initial_point = get_point()
     for item in data:
         for el in data[item]:
@@ -92,4 +91,4 @@ def draw_all_PPT(data):
                     item_coordinates[3], item_coordinates[4], item_coordinates[5])
 
 
-draw_all_PPT(format_data(get_json_data()))
+main(format_data(get_json_data()))
