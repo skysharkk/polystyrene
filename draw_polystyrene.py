@@ -80,6 +80,7 @@ def format_coordinates_from_name(coordinates):
 
 def main(data):
     initial_point = get_point()
+    print(initial_point)
     for item in data:
         for el in data[item]:
             for i in range(el[1]):
