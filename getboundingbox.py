@@ -9,4 +9,4 @@ def get_bounding_box(entity):
     ref_min_point = byref(min_point)
     ref_max_point = byref(max_point)
     entity.GetBoundingBox(ref_min_point, ref_max_point)
-    return [min_point, max_point]
+    return [array("d", list(*min_point)), array("d", list(*max_point))]
