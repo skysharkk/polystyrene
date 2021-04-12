@@ -17,4 +17,4 @@ def get_mtext_height(model_space, width, text_height, text):
     text.Height = text_height
     bounding_box_coordinates = get_bounding_box(text)
     text.Delete()
-    return bounding_box_coordinates[1][1] - bounding_box_coordinates[0][1]
+    return abs(bounding_box_coordinates[1][1] - bounding_box_coordinates[0][1])
